@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techychat – Chat</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <meta name="theme-color" content="#6c63ff">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <style>
+    body{overflow:hidden}
+    .chat-wrap{display:flex;flex-direction:column;height:100vh}
+    .chat-top{position:fixed;top:0;left:0;right:0;height:var(--nav-h);background:rgba(17,17,24,.95);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 12px;z-index:100;backdrop-filter:blur(20px)}
+    [data-theme=light] .chat-top{background:rgba(240,240,248,.95)}
+    .msgs{flex:1;overflow-y:auto;padding:calc(var(--nav-h) + 8px) 16px 88px;display:flex;flex-direction:column;gap:4px}
+    .input-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(17,17,24,.95);border-top:1px solid var(--border);padding:10px 12px;display:flex;align-items:flex-end;gap:8px;backdrop-filter:blur(20px)}
+    [data-theme=light] .input-bar{background:rgba(240,240,248,.95)}
+    .input-bar textarea{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:20px;padding:10px 16px;color:var(--text);resize:none;max-height:120px;font-size:.9rem;line-height:1.5;transition:border-color .2s;min-height:44px}
+    .input-bar textarea:focus{border-color:var(--accent);outline:none}
+    .date-sep{text-align:center;font-size:.7rem;color:var(--text3);margin:8px 0}
+    .date-sep span{background:var(--surface2);padding:3px 12px;border-radius:999px}
+    .menu-drop{position:absolute;top:calc(var(--nav-h) - 4px);right:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);min-width:150px;z-index:200;box-shadow:var(--shadow)}
+    .menu-drop button{width:100%;padding:12px 16px;text-align:left;background:none;font-size:.88rem;cursor:pointer;border:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .menu-drop button:last-child{border-bottom:none;color:var(--red)}
+  </style>
+</head>
+<body>
+<div class="chat-wrap">
+  <!-- Header -->
+  <div class="chat-top">
+    <button class="nav-icon-btn" onclick="history.back()" style="color:var(--text2)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div id="hd-av" onclick="location.href='user-profile.html?uid='+recipientId" style="cursor:pointer"></div>
+    <div style="flex:1;min-width:0;cursor:pointer" onclick="location.href='user-profile.html?uid='+recipientId">
+      <div id="hd-name" style="font-weight:700;font-family:var(--font-display);overflow:hidden;white-space:nowrap;text-overflow:ellipsis"></div>
+      <div id="hd-status" style="font-size:.74rem;color:var(--text3)"></div>
+    </div>
+    <button class="nav-icon-btn" id="btn-menu" onclick="toggleMenu()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    </button>
+    <div id="drop-menu" class="menu-drop hidden">
+      <button onclick="location.href='user-profile.html?uid='+recipientId">View Profile</button>
+      <button onclick="blockUser()">Block User</button>
+    </div>
+  </div>
+
+  <!-- Away banner -->
+  <div id="away-banner" class="away-banner hidden" style="margin:calc(var(--nav-h)+8px) 16px 0">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    <span id="away-text"></span>
+  </div>
+
+  <!-- Messages -->
+  <div class="msgs" id="msgs"></div>
+
+  <!-- Image preview strip -->
+  <div id="img-strip" style="padding:0 16px 4px"></div>
+
+  <!-- Input bar -->
+  <div class="input-bar">
+    <label for="img-pick" style="cursor:pointer;color:var(--text3);display:flex;align-items:center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </label>
+    <input type="file" id="img-pick" accept="image/*" class="hidden" onchange="pickImage(event)">
+    <textarea id="txt" placeholder="Message…" rows="1"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+    <button class="send-btn" onclick="send()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<div id="tc-toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+const params      = new URLSearchParams(location.search);
+const recipientId = params.get('uid');
+let me = null, imgBlob = null, lastDate = null;
+
+async function init() {
+  if (!recipientId) { location.href = 'messages.html'; return; }
+  const s = await Auth.requireAuth('auth.html');
+  if (!s) return;
+  me = s.user;
+  Idle.init();
+
+  // Verify friendship
+  const { data: fr } = await supabase.from('friends').select('id').eq('user_id', me.id).eq('friend_id', recipientId).maybeSingle();
+  if (!fr) { Toast.error('You can only message friends'); history.back(); return; }
+
+  // Load recipient profile
+  const { data: rp } = await supabase.from('profiles').select('*').eq('id', recipientId).single();
+  if (!rp) { Toast.error('User not found'); return; }
+
+  document.getElementById('hd-av').innerHTML = avatar(rp, 38);
+  document.getElementById('hd-name').textContent = rp.display_name;
+  document.getElementById('hd-status').textContent = rp.status === 'online' ? '● Online' : 'Offline';
+  document.title = rp.display_name + ' – Techychat';
+
+  // Away mode
+  const { data: rs } = await supabase.from('user_settings').select('away_mode,auto_reply_text').eq('user_id', recipientId).single();
+  if (rs?.away_mode) {
+    document.getElementById('away-banner').classList.remove('hidden');
+    document.getElementById('away-text').textContent = `${rp.display_name} is away.`;
+  }
+
+  await loadMessages();
+  markRead();
+  subscribe();
+}
+
+async function loadMessages() {
+  const { data: msgs } = await supabase.from('messages').select('*')
+    .or(`and(sender_id.eq.${me.id},receiver_id.eq.${recipientId}),and(sender_id.eq.${recipientId},receiver_id.eq.${me.id})`)
+    .order('created_at', { ascending: true });
+
+  const wrap = document.getElementById('msgs');
+  wrap.innerHTML = '';
+  lastDate = null;
+  if (!msgs?.length) {
+    wrap.innerHTML = '<div class="empty-state" style="padding:40px 0"><p class="text-muted text-sm">No messages yet — say hello! 👋</p></div>';
+    return;
+  }
+  msgs.forEach(m => appendMsg(m, false));
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function appendMsg(msg, animate = true) {
+  const wrap  = document.getElementById('msgs');
+  const isOut = msg.sender_id === me.id;
+  const d     = new Date(msg.created_at).toDateString();
+  if (d !== lastDate) {
+    const sep = document.createElement('div');
+    sep.className = 'date-sep';
+    const now  = new Date().toDateString();
+    const yest = new Date(Date.now()-86400000).toDateString();
+    sep.innerHTML = `<span>${d===now?'Today':d===yest?'Yesterday':new Date(msg.created_at).toLocaleDateString([],{month:'short',day:'numeric'})}</span>`;
+    wrap.appendChild(sep);
+    lastDate = d;
+  }
+  const el = document.createElement('div');
+  el.className = `msg ${isOut ? 'msg-out' : 'msg-in'}`;
+  if (!animate) el.style.animation = 'none';
+  el.dataset.id = msg.id;
+
+  const ticks = isOut ? `<span class="msg-status ${msg.is_read?'read-tick':''}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+    ${msg.delivered_at?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>`:''}
+  </span>` : '';
+
+  let body = '';
+  if (msg.image_url) {
+    body = `<img src="${msg.image_url}" class="msg-img" onclick="openLightbox('${msg.image_url}')" alt="">`;
+    if (msg.content) body += `<div style="margin-top:6px">${esc(msg.content)}</div>`;
+  } else {
+    body = esc(msg.content || '');
+  }
+
+  el.innerHTML = `<div class="msg-bubble">${body}</div><div class="msg-time">${chatTime(msg.created_at)} ${ticks}</div>`;
+  wrap.appendChild(el);
+}
+
+async function send() {
+  const txt = document.getElementById('txt').value.trim();
+  if (!txt && !imgBlob) return;
+
+  // Optimistic render
+  const temp = { id: 'tmp-'+Date.now(), sender_id: me.id, receiver_id: recipientId, content: txt, image_url: null, is_read: false, delivered_at: null, created_at: new Date().toISOString() };
+  document.getElementById('txt').value = '';
+  document.getElementById('txt').style.height = 'auto';
+  clearImg();
+  appendMsg(temp, true);
+  const wrap = document.getElementById('msgs');
+  wrap.scrollTo({ top: wrap.scrollHeight, behavior: 'smooth' });
+
+  let imageUrl = null;
+  if (imgBlob) {
+    const fname = `${me.id}/${Date.now()}.jpg`;
+    await supabase.storage.from('media').upload(fname, imgBlob, { contentType: 'image/jpeg', upsert: false });
+    const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fname);
+    imageUrl = publicUrl;
+  }
+
+  const { data: newMsg } = await supabase.from('messages').insert({
+    sender_id: me.id, receiver_id: recipientId,
+    content: txt || null, image_url: imageUrl,
+    is_read: false, delivered_at: new Date().toISOString()
+  }).select().single();
+
+  // Swap temp
+  document.querySelector(`[data-id="${temp.id}"]`)?.remove();
+  if (newMsg) appendMsg(newMsg, false);
+
+  // Notification
+  supabase.from('notifications').insert({ user_id: recipientId, from_user_id: me.id, type: 'new_message', message: txt ? txt.slice(0,80) : '📷 Photo', is_read: false, link: `chat.html?uid=${me.id}` });
+
+  // Auto-reply
+  const { data: rs } = await supabase.from('user_settings').select('away_mode,auto_reply_text').eq('user_id', recipientId).single();
+  if (rs?.away_mode && rs?.auto_reply_text) {
+    setTimeout(async () => {
+      const { data: ar } = await supabase.from('messages').insert({ sender_id: recipientId, receiver_id: me.id, content: rs.auto_reply_text, is_read: false, delivered_at: new Date().toISOString(), is_auto_reply: true }).select().single();
+      if (ar) { appendMsg(ar, true); wrap.scrollTo({ top: wrap.scrollHeight, behavior: 'smooth' }); }
+    }, 1500);
+  }
+}
+
+function subscribe() {
+  supabase.channel(`chat:${[me.id,recipientId].sort().join('-')}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, ({ new: m }) => {
+      if (!document.querySelector(`[data-id="${m.id}"]`) &&
+          ((m.sender_id === recipientId && m.receiver_id === me.id) ||
+           (m.sender_id === me.id && m.receiver_id === recipientId))) {
+        appendMsg(m, true);
+        const w = document.getElementById('msgs');
+        w.scrollTo({ top: w.scrollHeight, behavior: 'smooth' });
+        if (m.sender_id === recipientId) markRead();
+      }
+    }).subscribe();
+}
+
+async function markRead() {
+  await supabase.from('messages').update({ is_read: true })
+    .eq('sender_id', recipientId).eq('receiver_id', me.id).eq('is_read', false);
+}
+
+async function pickImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5*1024*1024) { Toast.error('Max 5 MB'); return; }
+  imgBlob = await compressImage(file);
+  const url = URL.createObjectURL(imgBlob);
+  document.getElementById('img-strip').innerHTML = `<div class="img-preview-wrap"><img src="${url}"><div class="remove-img" onclick="clearImg()">✕</div></div>`;
+}
+
+function clearImg() {
+  imgBlob = null;
+  document.getElementById('img-strip').innerHTML = '';
+  document.getElementById('img-pick').value = '';
+}
+
+function toggleMenu() { document.getElementById('drop-menu').classList.toggle('hidden'); }
+document.addEventListener('click', e => { if (!e.target.closest('#btn-menu') && !e.target.closest('#drop-menu')) document.getElementById('drop-menu').classList.add('hidden'); });
+
+async function blockUser() {
+  if (!confirm('Block this user? You will be removed from each other\'s friends.')) return;
+  await supabase.from('friends').delete().or(`and(user_id.eq.${me.id},friend_id.eq.${recipientId}),and(user_id.eq.${recipientId},friend_id.eq.${me.id})`);
+  await supabase.from('blocked_users').insert({ user_id: me.id, blocked_id: recipientId });
+  Toast.success('User blocked');
+  setTimeout(() => location.href = 'messages.html', 700);
+}
+
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

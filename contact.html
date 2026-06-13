@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techychat – Contact Us</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <meta name="theme-color" content="#6c63ff">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <style>
+    .contact-hero{text-align:center;padding:28px 20px 20px;background:linear-gradient(180deg,rgba(108,99,255,.07) 0%,transparent 100%);border-radius:var(--radius);margin-bottom:20px}
+    .hero-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 32px rgba(108,99,255,.3)}
+    .link-card{display:flex;align-items:center;gap:14px;padding:15px 16px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);transition:border-color .2s,transform .15s;text-decoration:none;color:var(--text)}
+    .link-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+    .link-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .success-wrap{display:none;text-align:center;padding:48px 24px}
+    .success-wrap.show{display:block}
+    .success-icon{width:72px;height:72px;border-radius:50%;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+    .char-hint{font-size:.72rem;color:var(--text3);text-align:right;margin-top:3px}
+  </style>
+</head>
+<body>
+<nav class="top-nav">
+  <button class="nav-icon-btn" onclick="history.back()" style="color:var(--text2)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <span class="logo">Contact Us</span>
+  <button class="nav-icon-btn" onclick="Theme.toggle()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  </button>
+</nav>
+
+<main class="main">
+  <div class="container">
+
+    <div class="contact-hero">
+      <div class="hero-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <h1 style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;margin-bottom:8px">We'd love to hear from you</h1>
+      <p class="text-muted text-sm">Send a message or reach us directly</p>
+    </div>
+
+    <!-- Direct links -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px">
+      <a href="mailto:support@techychat.app" class="link-card">
+        <div class="link-icon" style="background:rgba(108,99,255,.12)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.92rem">Email</div>
+          <div style="font-size:.8rem;color:var(--text2)">support@techychat.app</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+      <a href="https://wa.me/265991234567" target="_blank" rel="noopener" class="link-card">
+        <div class="link-icon" style="background:rgba(34,197,94,.12)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.92rem">WhatsApp</div>
+          <div style="font-size:.8rem;color:var(--text2)">+265 991 234 567</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+    </div>
+
+    <div class="divider-text" style="margin-bottom:20px">or send a message</div>
+
+    <!-- Form -->
+    <div id="form-wrap" style="display:flex;flex-direction:column;gap:14px">
+      <div class="input-group">
+        <label>Your Name</label>
+        <input type="text" class="input" id="f-name" maxlength="80" placeholder="Full name" autocomplete="name">
+      </div>
+      <div class="input-group">
+        <label>Email Address</label>
+        <input type="email" class="input" id="f-email" maxlength="120" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="input-group">
+        <label>Subject</label>
+        <input type="text" class="input" id="f-subject" maxlength="120" placeholder="What's this about?">
+      </div>
+      <div class="input-group">
+        <label>Message</label>
+        <textarea class="input" id="f-msg" rows="5" maxlength="1000" placeholder="Describe your issue or feedback…" style="resize:none" oninput="document.getElementById('char-c').textContent=this.value.length"></textarea>
+        <div class="char-hint"><span id="char-c">0</span> / 1000</div>
+      </div>
+      <button class="btn btn-primary w-full" id="sub-btn" onclick="submit()">
+        <span id="sub-lbl">Send Message</span>
+        <div class="spinner hidden" id="sub-sp"></div>
+      </button>
+    </div>
+
+    <!-- Success -->
+    <div class="success-wrap" id="success">
+      <div class="success-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 style="font-family:var(--font-display);font-size:1.25rem;font-weight:800;margin-bottom:8px">Message Sent!</h2>
+      <p class="text-muted" style="margin-bottom:24px">Thanks for reaching out. We'll get back to you as soon as possible.</p>
+      <button class="btn btn-primary" onclick="reset()">Send Another</button>
+    </div>
+
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a href="messages.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge badge-msg hidden" style="position:absolute;top:4px;right:8px"></span>Chats</a>
+  <a href="posts.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Posts</a>
+  <a href="friends.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Friends</a>
+  <a href="notifications.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="badge badge-notif hidden" style="position:absolute;top:4px;right:8px"></span>Alerts</a>
+  <a href="profile.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Me</a>
+</nav>
+
+<div id="tc-toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+async function init() {
+  // Pre-fill name/email if logged in
+  const s = await Auth.getSession();
+  if (s) {
+    const { data: p } = await supabase.from('profiles').select('display_name,email').eq('id', s.user.id).single();
+    if (p) {
+      document.getElementById('f-name').value  = p.display_name || '';
+      document.getElementById('f-email').value = p.email || s.user.email || '';
+    }
+    updateBadges();
+  }
+}
+
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+async function submit() {
+  const name    = document.getElementById('f-name').value.trim();
+  const email   = document.getElementById('f-email').value.trim();
+  const subject = document.getElementById('f-subject').value.trim();
+  const message = document.getElementById('f-msg').value.trim();
+
+  if (!name)                  { Toast.error('Enter your name');          return; }
+  if (!isValidEmail(email))   { Toast.error('Enter a valid email');      return; }
+  if (!subject)               { Toast.error('Enter a subject');          return; }
+  if (message.length < 10)    { Toast.error('Message too short');        return; }
+
+  const btn = document.getElementById('sub-btn');
+  const lbl = document.getElementById('sub-lbl');
+  const sp  = document.getElementById('sub-sp');
+  btn.disabled = true; lbl.classList.add('hidden'); sp.classList.remove('hidden');
+
+  const { error } = await supabase.from('contact_messages').insert({ name, email, subject, message });
+
+  btn.disabled = false; lbl.classList.remove('hidden'); sp.classList.add('hidden');
+
+  if (error) { Toast.error('Failed to send — try again'); return; }
+
+  document.getElementById('form-wrap').style.display = 'none';
+  document.getElementById('success').classList.add('show');
+}
+
+function reset() {
+  ['f-name','f-email','f-subject','f-msg'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('char-c').textContent = '0';
+  document.getElementById('form-wrap').style.display = 'flex';
+  document.getElementById('success').classList.remove('show');
+}
+
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

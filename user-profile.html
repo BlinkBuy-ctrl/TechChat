@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techychat – Profile</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <meta name="theme-color" content="#6c63ff">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <style>
+    .user-hero{text-align:center;padding:36px 20px 24px;background:linear-gradient(180deg,rgba(108,99,255,.07) 0%,transparent 100%);border-radius:var(--radius);margin-bottom:20px}
+    .action-row{display:flex;gap:10px;justify-content:center;margin-top:20px}
+    .status-pill{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 14px;font-size:.75rem;color:var(--text2);margin-top:10px}
+    .info-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+    .info-row:last-child{border-bottom:none}
+    .info-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0}
+  </style>
+</head>
+<body>
+<nav class="top-nav">
+  <button class="nav-icon-btn" onclick="history.back()" style="color:var(--text2)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <span class="logo" id="nav-title">Profile</span>
+  <button class="nav-icon-btn" onclick="Theme.toggle()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  </button>
+</nav>
+
+<main class="main">
+  <div class="container">
+
+    <!-- Skeleton -->
+    <div id="skel" style="text-align:center;padding:40px 0 20px;display:flex;flex-direction:column;align-items:center;gap:12px">
+      <div class="skeleton rounded-full" style="width:88px;height:88px"></div>
+      <div class="skeleton" style="height:18px;width:140px"></div>
+      <div class="skeleton" style="height:12px;width:90px"></div>
+    </div>
+
+    <!-- Content -->
+    <div id="content" class="hidden">
+
+      <div class="user-hero">
+        <div style="position:relative;display:inline-block;margin-bottom:14px">
+          <div id="u-av"></div>
+          <span id="u-dot" class="dot dot-gray" style="position:absolute;bottom:4px;right:4px;width:14px;height:14px;border-width:3px"></span>
+        </div>
+        <h1 id="u-name" style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;margin-bottom:6px">—</h1>
+        <p  id="u-bio"  style="font-size:.88rem;color:var(--text2);line-height:1.5;max-width:300px;margin:0 auto"></p>
+        <div class="status-pill">
+          <span id="u-sdot" class="dot dot-gray" style="border:none"></span>
+          <span id="u-slabel">Offline</span>
+        </div>
+        <div class="action-row" id="actions"></div>
+      </div>
+
+      <!-- Info visible to friends only -->
+      <div id="friend-card" class="card hidden" style="margin-bottom:16px">
+        <div class="info-row">
+          <div class="info-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+          <div><div style="font-size:.76rem;color:var(--text3);margin-bottom:1px">Email</div><div id="u-email" style="font-size:.9rem;font-weight:500">—</div></div>
+        </div>
+        <div class="info-row" id="phone-row" style="display:none">
+          <div class="info-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.13 3.44 2 2 0 0 1 3.11 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.34 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+          <div><div style="font-size:.76rem;color:var(--text3);margin-bottom:1px">Phone</div><div id="u-phone" style="font-size:.9rem;font-weight:500">—</div></div>
+        </div>
+      </div>
+
+      <!-- Private notice for non-friends -->
+      <div id="private-card" class="card hidden" style="text-align:center;padding:32px 20px;margin-bottom:16px">
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--text3)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <p style="font-weight:600;margin-bottom:6px">Friends Only</p>
+        <p class="text-muted text-sm">Profile details are only visible to friends.</p>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a href="messages.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge badge-msg hidden" style="position:absolute;top:4px;right:8px"></span>Chats</a>
+  <a href="posts.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Posts</a>
+  <a href="friends.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Friends</a>
+  <a href="notifications.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="badge badge-notif hidden" style="position:absolute;top:4px;right:8px"></span>Alerts</a>
+  <a href="profile.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Me</a>
+</nav>
+
+<div id="tc-toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+const uid = new URLSearchParams(location.search).get('uid');
+let me = null, targetProf = null;
+
+async function init() {
+  const s = await Auth.requireAuth('auth.html');
+  if (!s) return;
+  me = s.user;
+  if (!uid) { history.back(); return; }
+  if (uid === me.id) { location.href = 'profile.html'; return; }
+  Idle.init();
+  await loadProfile();
+  updateBadges();
+}
+
+async function loadProfile() {
+  const { data: p, error } = await supabase.from('profiles')
+    .select('id,display_name,bio,profile_photo_url,email,phone_number,status')
+    .eq('id', uid).single();
+
+  document.getElementById('skel').remove();
+  document.getElementById('content').classList.remove('hidden');
+
+  if (error || !p) { document.getElementById('u-name').textContent = 'User not found'; return; }
+  targetProf = p;
+
+  // Avatar
+  document.getElementById('u-av').innerHTML = p.profile_photo_url
+    ? `<img src="${p.profile_photo_url}" class="avatar" width="88" height="88" style="object-fit:cover">`
+    : `<div class="avatar-placeholder" style="width:88px;height:88px;font-size:2rem">${(p.display_name||'?')[0].toUpperCase()}</div>`;
+
+  document.getElementById('u-name').textContent      = p.display_name || 'Unknown';
+  document.getElementById('nav-title').textContent   = p.display_name || 'Profile';
+  document.getElementById('u-bio').textContent       = p.bio || '';
+  document.title = (p.display_name || 'Profile') + ' – Techychat';
+
+  const on = p.status === 'online';
+  document.getElementById('u-dot').className    = `dot ${on ? 'dot-green' : 'dot-gray'}`;
+  document.getElementById('u-sdot').className   = `dot ${on ? 'dot-green' : 'dot-gray'}`;
+  document.getElementById('u-slabel').textContent = on ? 'Online now' : 'Offline';
+
+  // Check relationship
+  const [{ data: fr }, { data: sent }, { data: recv }] = await Promise.all([
+    supabase.from('friends').select('id').eq('user_id', me.id).eq('friend_id', uid).maybeSingle(),
+    supabase.from('friend_requests').select('id').eq('sender_id', me.id).eq('receiver_id', uid).eq('status','pending').maybeSingle(),
+    supabase.from('friend_requests').select('id').eq('sender_id', uid).eq('receiver_id', me.id).eq('status','pending').maybeSingle(),
+  ]);
+
+  const isFriend = !!fr, hasSent = !!sent, hasRecv = !!recv;
+  renderActions(isFriend, hasSent, hasRecv);
+
+  if (isFriend) {
+    document.getElementById('u-email').textContent = p.email || '—';
+    if (p.phone_number) {
+      document.getElementById('u-phone').textContent = p.phone_number;
+      document.getElementById('phone-row').style.display = 'flex';
+    }
+    document.getElementById('friend-card').classList.remove('hidden');
+  } else {
+    document.getElementById('private-card').classList.remove('hidden');
+  }
+}
+
+function renderActions(isFriend, hasSent, hasRecv) {
+  const el = document.getElementById('actions');
+  if (isFriend) {
+    el.innerHTML = `
+      <button class="btn btn-primary" onclick="location.href='chat.html?uid=${uid}'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Message
+      </button>
+      <button class="btn btn-ghost" onclick="confirmUnfriend()">Unfriend</button>`;
+  } else if (hasSent) {
+    el.innerHTML = `<button class="btn btn-ghost" disabled>Request Sent</button>`;
+  } else if (hasRecv) {
+    el.innerHTML = `
+      <button class="btn btn-primary" onclick="acceptReq()">Accept Request</button>
+      <button class="btn btn-ghost"   onclick="declineReq()">Decline</button>`;
+  } else {
+    el.innerHTML = `
+      <button class="btn btn-primary" onclick="sendReq()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Friend
+      </button>`;
+  }
+}
+
+async function sendReq() {
+  const { data: blk } = await supabase.from('blocked_users').select('id')
+    .or(`and(user_id.eq.${me.id},blocked_id.eq.${uid}),and(user_id.eq.${uid},blocked_id.eq.${me.id})`).maybeSingle();
+  if (blk) { Toast.error('Cannot send request'); return; }
+  const { error } = await supabase.from('friend_requests').insert({ sender_id: me.id, receiver_id: uid, status: 'pending' });
+  if (error && error.code !== '23505') { Toast.error('Failed'); return; }
+  supabase.from('notifications').insert({ user_id: uid, from_user_id: me.id, type: 'friend_request', message: 'sent you a friend request', is_read: false, link: 'friends.html' });
+  Toast.success('Request sent!');
+  renderActions(false, true, false);
+}
+
+async function acceptReq() {
+  const { data: req } = await supabase.from('friend_requests').select('id')
+    .eq('sender_id', uid).eq('receiver_id', me.id).eq('status', 'pending').single();
+  if (!req) { Toast.error('Request not found'); return; }
+  await supabase.from('friend_requests').update({ status: 'accepted' }).eq('id', req.id);
+  await supabase.from('friends').insert([{ user_id: me.id, friend_id: uid }, { user_id: uid, friend_id: me.id }]);
+  supabase.from('notifications').insert({ user_id: uid, from_user_id: me.id, type: 'friend_accept', message: 'accepted your friend request', is_read: false, link: 'friends.html' });
+  Toast.success("You're now friends!");
+  renderActions(true, false, false);
+  document.getElementById('u-email').textContent = targetProf.email || '—';
+  document.getElementById('friend-card').classList.remove('hidden');
+  document.getElementById('private-card').classList.add('hidden');
+}
+
+async function declineReq() {
+  await supabase.from('friend_requests').update({ status: 'declined' })
+    .eq('sender_id', uid).eq('receiver_id', me.id);
+  Toast.info('Request declined');
+  renderActions(false, false, false);
+}
+
+function confirmUnfriend() {
+  openModal(`<div class="modal">
+    <div class="modal-header"><span style="font-family:var(--font-display);font-weight:700">Unfriend</span><button onclick="this.closest('.modal-overlay').remove()" class="btn-icon btn-ghost">✕</button></div>
+    <div class="modal-body"><p class="text-muted">Remove <strong>${esc(targetProf?.display_name||'this user')}</strong> from your friends? You won't be able to message them.</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="btn btn-danger" onclick="doUnfriend()">Unfriend</button>
+    </div>
+  </div>`);
+}
+
+async function doUnfriend() {
+  await supabase.from('friends').delete().or(`and(user_id.eq.${me.id},friend_id.eq.${uid}),and(user_id.eq.${uid},friend_id.eq.${me.id})`);
+  await supabase.from('friend_requests').delete().or(`and(sender_id.eq.${me.id},receiver_id.eq.${uid}),and(sender_id.eq.${uid},receiver_id.eq.${me.id})`);
+  document.querySelector('.modal-overlay')?.remove();
+  Toast.success('Unfriended');
+  renderActions(false, false, false);
+  document.getElementById('friend-card').classList.add('hidden');
+  document.getElementById('private-card').classList.remove('hidden');
+}
+
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

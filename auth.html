@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techychat</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <meta name="theme-color" content="#6c63ff">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <style>
+    .step{display:none}.step.active{display:block}
+    .prog{display:flex;gap:6px;justify-content:center;margin-bottom:24px}
+    .prog-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:.25s}
+    .prog-dot.on{background:var(--accent);transform:scale(1.35)}
+    .prog-dot.done{background:var(--green)}
+    .mode-tabs{display:flex;background:var(--surface2);border-radius:var(--radius-sm);padding:4px;margin-bottom:24px}
+    .mode-tab{flex:1;padding:9px;border-radius:calc(var(--radius-sm) - 2px);font-size:.85rem;font-weight:600;background:transparent;color:var(--text2);border:none;cursor:pointer;transition:.2s}
+    .mode-tab.active{background:var(--accent);color:#fff}
+  </style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">Techychat</div>
+    <p class="auth-sub" id="sub-text">Private messages. Simple. Secure.</p>
+
+    <!-- Mode tabs (Login / Sign Up) -->
+    <div class="mode-tabs" id="mode-tabs">
+      <button class="mode-tab active" onclick="setMode('login')">Sign In</button>
+      <button class="mode-tab"        onclick="setMode('signup')">Sign Up</button>
+    </div>
+
+    <!-- ── STEP 0: Email ── -->
+    <div class="step active" id="step-email">
+      <div class="input-group" style="margin-bottom:18px">
+        <label>Email Address</label>
+        <input type="email" class="input" id="email-input" placeholder="you@example.com" autocomplete="email" inputmode="email">
+      </div>
+      <button class="btn btn-primary w-full" id="btn-email" onclick="submitEmail()">
+        <span id="lbl-email">Continue</span>
+        <div class="spinner hidden" id="sp-email"></div>
+      </button>
+    </div>
+
+    <!-- ── STEP 1: OTP code ── -->
+    <div class="step" id="step-otp">
+      <p style="text-align:center;color:var(--text2);font-size:.88rem;margin-bottom:18px">
+        Enter the 6-digit code sent to<br>
+        <strong id="otp-email-display" style="color:var(--text)"></strong>
+      </p>
+      <div class="input-group" style="margin-bottom:18px">
+        <label>Verification Code</label>
+        <input type="text" class="input" id="otp-input" placeholder="000000" maxlength="6" inputmode="numeric"
+          style="text-align:center;font-size:1.5rem;letter-spacing:.6em;font-family:var(--font-display)"
+          onkeydown="if(event.key==='Enter')verifyOTP()">
+      </div>
+      <button class="btn btn-primary w-full" id="btn-otp" onclick="verifyOTP()">
+        <span id="lbl-otp">Verify</span>
+        <div class="spinner hidden" id="sp-otp"></div>
+      </button>
+      <p style="text-align:center;margin-top:14px;font-size:.82rem;color:var(--text2)">
+        <a href="#" onclick="submitEmail(true)" style="color:var(--accent)">Resend code</a>
+        &nbsp;·&nbsp;
+        <a href="#" onclick="goStep('step-email',0)" style="color:var(--text3)">Change email</a>
+      </p>
+    </div>
+
+    <!-- ── STEP 2 (signup only): Display name ── -->
+    <div class="step" id="step-name">
+      <div class="prog" id="prog"><div class="prog-dot on"></div><div class="prog-dot"></div></div>
+      <div class="input-group" style="margin-bottom:8px">
+        <label>Display Name</label>
+        <input type="text" class="input" id="name-input" placeholder="What should friends call you?" maxlength="40"
+          onkeydown="if(event.key==='Enter')submitName()">
+      </div>
+      <p style="font-size:.74rem;color:var(--text3);margin-bottom:16px">Visible to friends only.</p>
+      <button class="btn btn-primary w-full" onclick="submitName()">Continue →</button>
+    </div>
+
+    <!-- ── STEP 3: PIN (set on signup, enter on login) ── -->
+    <div class="step" id="step-pin">
+      <div class="prog" id="prog2"><div class="prog-dot done"></div><div class="prog-dot on"></div></div>
+      <p style="text-align:center;color:var(--text2);font-size:.88rem;margin-bottom:4px" id="pin-label">Enter your PIN</p>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+        <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div id="pin-keypad" class="pin-keypad"></div>
+      <p id="pin-hint" style="text-align:center;font-size:.78rem;color:var(--text2);margin-top:10px;min-height:18px"></p>
+      <p id="pin-forgot" style="text-align:center;margin-top:10px;font-size:.82rem">
+        <a href="#" onclick="forgotPIN()" style="color:var(--accent)">Forgot PIN?</a>
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<div id="tc-toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+let mode        = 'login';   // 'login' | 'signup'
+let userEmail   = '';
+let userName    = '';
+let pinFirst    = '';
+let confirming  = false;
+let resetMode   = false;
+
+// Redirect if already logged in
+(async () => { await Auth.redirectIfAuth('messages.html'); })();
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-tab').forEach((t, i) =>
+    t.classList.toggle('active', (i === 0 && m === 'login') || (i === 1 && m === 'signup')));
+  document.getElementById('sub-text').textContent =
+    m === 'login' ? 'Welcome back.' : 'Create your account — takes 60 seconds.';
+  goStep('step-email', -1);
+}
+
+function goStep(id, progIdx) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Show/hide signup-only progress bars
+  const isSignup = mode === 'signup';
+  document.getElementById('prog')?.parentElement && (document.getElementById('prog').style.display  = isSignup && id === 'step-name' ? 'flex' : 'none');
+  document.getElementById('prog2')?.parentElement && (document.getElementById('prog2').style.display = isSignup && id === 'step-pin'  ? 'flex' : 'none');
+  document.getElementById('mode-tabs').style.display = id === 'step-email' ? 'flex' : 'none';
+}
+
+// ── STEP 0: submit email ──
+async function submitEmail(resend = false) {
+  const email = document.getElementById('email-input').value.trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    Toast.error('Enter a valid email address'); return;
+  }
+  userEmail = email;
+  setBusy('email', true);
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true }
+  });
+  setBusy('email', false);
+  if (error) { Toast.error(error.message); return; }
+  document.getElementById('otp-email-display').textContent = email;
+  Toast.success(resend ? 'Code resent!' : 'Check your email for the code.');
+  goStep('step-otp', 1);
+}
+
+// ── STEP 1: verify OTP ──
+async function verifyOTP() {
+  const token = document.getElementById('otp-input').value.trim();
+  if (token.length !== 6) { Toast.error('Enter the 6-digit code'); return; }
+  setBusy('otp', true);
+  const { data, error } = await supabase.auth.verifyOtp({ email: userEmail, token, type: 'email' });
+  setBusy('otp', false);
+  if (error) { Toast.error(error.message); return; }
+
+  // Check if profile already has a PIN
+  const { data: profile } = await supabase.from('profiles').select('pin_hash, display_name').eq('id', data.user.id).single();
+
+  if (resetMode) {
+    // PIN reset flow — go straight to set PIN
+    resetMode = false;
+    document.getElementById('pin-label').textContent = 'Set a new PIN';
+    document.getElementById('pin-forgot').style.display = 'none';
+    document.getElementById('prog2').style.display = 'none';
+    confirming = false; pinFirst = '';
+    renderKeypad('pin-keypad', handlePinKey);
+    updatePinDots('pin-dots', 0);
+    goStep('step-pin', 3);
+    return;
+  }
+
+  if (profile?.pin_hash) {
+    // Existing user — enter PIN
+    mode = 'login';
+    document.getElementById('pin-label').textContent = 'Enter your PIN';
+    document.getElementById('pin-forgot').style.display = 'block';
+    document.getElementById('prog2').style.display = 'none';
+    renderKeypad('pin-keypad', handleLoginKey);
+    updatePinDots('pin-dots', 0);
+    goStep('step-pin', 3);
+  } else {
+    // New user — collect name then set PIN
+    mode = 'signup';
+    goStep('step-name', 2);
+  }
+}
+
+// ── STEP 2: display name (signup) ──
+function submitName() {
+  userName = document.getElementById('name-input').value.trim();
+  if (!userName) { Toast.error('Enter a display name'); return; }
+  document.getElementById('pin-label').textContent = 'Create a 4–6 digit PIN';
+  document.getElementById('pin-forgot').style.display = 'none';
+  confirming = false; pinFirst = '';
+  renderKeypad('pin-keypad', handlePinKey);
+  updatePinDots('pin-dots', 0);
+  goStep('step-pin', 3);
+}
+
+// ── STEP 3a: LOGIN — enter existing PIN ──
+let loginPin = '';
+function handleLoginKey(key) {
+  if (key === '⌫') loginPin = loginPin.slice(0, -1);
+  else if (loginPin.length < 6) loginPin += key;
+  updatePinDots('pin-dots', loginPin.length);
+  if (loginPin.length >= 4) checkLoginPin();
+}
+async function checkLoginPin() {
+  const u = await Auth.user();
+  const { data: p } = await supabase.from('profiles').select('pin_hash').eq('id', u.id).single();
+  const ok = await PIN.verify(loginPin, p.pin_hash);
+  if (ok) {
+    Toast.success('Welcome back!');
+    Idle.init();
+    setTimeout(() => location.href = 'messages.html', 400);
+  } else if (loginPin.length === 6) {
+    Toast.error('Incorrect PIN');
+    loginPin = '';
+    updatePinDots('pin-dots', 0);
+  }
+}
+
+// ── STEP 3b: SIGNUP — set new PIN ──
+function handlePinKey(key) {
+  if (!confirming) {
+    if (key === '⌫') pinFirst = pinFirst.slice(0, -1);
+    else if (pinFirst.length < 6) pinFirst += key;
+    updatePinDots('pin-dots', pinFirst.length);
+    if (pinFirst.length >= 4) {
+      confirming = true;
+      window._confirmPin = '';
+      document.getElementById('pin-label').textContent = 'Confirm your PIN';
+      document.getElementById('pin-hint').textContent  = '✓ Re-enter to confirm';
+      updatePinDots('pin-dots', 0);
+    }
+  } else {
+    if (key === '⌫') window._confirmPin = (window._confirmPin || '').slice(0, -1);
+    else if ((window._confirmPin || '').length < pinFirst.length) window._confirmPin = (window._confirmPin || '') + key;
+    updatePinDots('pin-dots', (window._confirmPin || '').length);
+    if ((window._confirmPin || '').length === pinFirst.length) {
+      if (window._confirmPin === pinFirst) finishSetup();
+      else {
+        Toast.error('PINs do not match — try again');
+        pinFirst = ''; window._confirmPin = ''; confirming = false;
+        document.getElementById('pin-label').textContent = 'Create a 4–6 digit PIN';
+        document.getElementById('pin-hint').textContent  = '';
+        updatePinDots('pin-dots', 0);
+      }
+    }
+  }
+}
+
+async function finishSetup() {
+  const u = await Auth.user();
+  if (!u) { Toast.error('Session expired'); goStep('step-email', -1); return; }
+  const hash = await PIN.hash(pinFirst);
+  const { error } = await supabase.from('profiles').update({
+    display_name: userName || undefined,
+    pin_hash: hash,
+    status: 'online'
+  }).eq('id', u.id);
+  if (error) { Toast.error('Could not save profile'); return; }
+  Toast.success(mode === 'signup' ? 'Account created! Welcome 🎉' : 'PIN updated!');
+  Idle.init();
+  setTimeout(() => location.href = 'messages.html', 500);
+}
+
+// ── Forgot PIN ──
+async function forgotPIN() {
+  resetMode = true;
+  Toast.info('Enter your email — a new code will be sent to reset your PIN.');
+  document.getElementById('email-input').value = userEmail;
+  goStep('step-email', -1);
+}
+
+// ── Busy helper ──
+function setBusy(id, busy) {
+  document.getElementById(`btn-${id}`).disabled = busy;
+  document.getElementById(`lbl-${id}`).classList.toggle('hidden', busy);
+  document.getElementById(`sp-${id}`).classList.toggle('hidden', !busy);
+}
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

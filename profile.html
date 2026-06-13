@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techychat – Profile</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <meta name="theme-color" content="#6c63ff">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <style>
+    .profile-hero{text-align:center;padding:32px 20px 20px;background:linear-gradient(180deg,rgba(108,99,255,.07) 0%,transparent 100%);border-radius:var(--radius);margin-bottom:20px}
+    .sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+    .sc-title{font-family:var(--font-display);font-size:.76rem;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:12px 16px 8px;border-bottom:1px solid var(--border)}
+    .sc-body{padding:4px 16px}
+    .crop-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+  </style>
+</head>
+<body>
+<nav class="top-nav">
+  <span class="logo">Techychat</span>
+  <div class="nav-icons">
+    <button class="nav-icon-btn" onclick="location.href='notifications.html'" style="position:relative">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="badge badge-notif hidden" style="position:absolute;top:6px;right:6px"></span>
+    </button>
+    <button class="nav-icon-btn" onclick="Theme.toggle()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="container">
+
+    <!-- Hero -->
+    <div class="profile-hero">
+      <div class="profile-photo-wrapper">
+        <div id="av"></div>
+        <label class="photo-edit-btn" for="photo-upload" title="Change photo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </label>
+        <input type="file" id="photo-upload" accept="image/*" class="hidden" onchange="pickPhoto(event)">
+      </div>
+      <h2 id="hero-name" style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;margin-bottom:4px">…</h2>
+      <p id="hero-email" style="font-size:.82rem;color:var(--text3)"></p>
+      <p id="hero-bio"   style="font-size:.88rem;color:var(--text2);margin-top:8px;line-height:1.5"></p>
+    </div>
+
+    <!-- Edit info -->
+    <div class="sc">
+      <div class="sc-title">Edit Profile</div>
+      <div class="sc-body" style="padding-top:14px;padding-bottom:16px;display:flex;flex-direction:column;gap:13px">
+        <div class="input-group">
+          <label>Display Name</label>
+          <input type="text" class="input" id="edit-name" maxlength="40">
+        </div>
+        <div class="input-group">
+          <label>Phone Number <span style="color:var(--text3);font-weight:400">(optional)</span></label>
+          <input type="tel" class="input" id="edit-phone" placeholder="+265 9XX XXX XXX">
+        </div>
+        <div class="input-group">
+          <label>Bio</label>
+          <textarea class="input" id="edit-bio" rows="2" maxlength="160" style="resize:none"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="sc">
+      <div class="sc-title">Status</div>
+      <div class="sc-body">
+        <div class="settings-row">
+          <div><div class="settings-row-label">Show as Online</div><div class="settings-row-sub">Friends can see when you're active</div></div>
+          <label class="toggle"><input type="checkbox" id="tog-online" onchange="setOnline(this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-reply -->
+    <div class="sc">
+      <div class="sc-title">Auto Reply</div>
+      <div class="sc-body">
+        <div class="settings-row">
+          <div><div class="settings-row-label">Away Mode</div><div class="settings-row-sub">Auto-replies to incoming messages</div></div>
+          <label class="toggle"><input type="checkbox" id="tog-away" onchange="setAway(this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div style="padding-bottom:14px;display:flex;flex-direction:column;gap:10px">
+          <div class="input-group">
+            <label>Auto-reply message</label>
+            <textarea class="input" id="auto-text" rows="2" maxlength="200" style="resize:none"></textarea>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="saveAutoReply()">Save Reply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div class="sc">
+      <div class="sc-title">Security</div>
+      <div class="sc-body" style="padding-top:14px;padding-bottom:16px;display:flex;flex-direction:column;gap:10px">
+        <p class="text-muted text-sm">To change your PIN, we'll send a new verification code to your email.</p>
+        <button class="btn btn-ghost" onclick="resetPIN()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Change PIN
+        </button>
+      </div>
+    </div>
+
+    <!-- Support -->
+    <div class="sc">
+      <div class="sc-title">Support</div>
+      <div class="sc-body" style="padding-top:12px;padding-bottom:14px">
+        <a href="contact.html" class="btn btn-ghost w-full">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Contact Us
+        </a>
+      </div>
+    </div>
+
+    <!-- Account -->
+    <div class="sc" style="margin-bottom:32px">
+      <div class="sc-title" style="color:var(--red)">Account</div>
+      <div class="sc-body" style="padding-top:12px;padding-bottom:14px;display:flex;flex-direction:column;gap:10px">
+        <button class="btn btn-ghost w-full" onclick="confirmLogout()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
+        <button class="btn btn-danger w-full" onclick="confirmDelete()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          Delete Account
+        </button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a href="messages.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge badge-msg hidden" style="position:absolute;top:4px;right:8px"></span>Chats</a>
+  <a href="posts.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Posts</a>
+  <a href="friends.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Friends</a>
+  <a href="notifications.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="badge badge-notif hidden" style="position:absolute;top:4px;right:8px"></span>Alerts</a>
+  <a href="profile.html" class="active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Me</a>
+</nav>
+
+<div id="tc-toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+let me = null, prof = null;
+
+async function init() {
+  const s = await Auth.requireAuth('auth.html');
+  if (!s) return;
+  me = s.user;
+  Idle.init();
+  await Promise.all([loadProfile(), loadSettings()]);
+  updateBadges();
+}
+
+async function loadProfile() {
+  const { data: p } = await supabase.from('profiles').select('*').eq('id', me.id).single();
+  prof = p || {};
+  renderHero();
+  document.getElementById('edit-name').value  = prof.display_name || '';
+  document.getElementById('edit-phone').value = prof.phone_number  || '';
+  document.getElementById('edit-bio').value   = prof.bio           || '';
+  document.getElementById('tog-online').checked = prof.status === 'online';
+}
+
+function renderHero() {
+  const avEl = document.getElementById('av');
+  avEl.innerHTML = prof.profile_photo_url
+    ? `<img src="${prof.profile_photo_url}" class="avatar" width="88" height="88" style="object-fit:cover">`
+    : `<div class="avatar-placeholder" style="width:88px;height:88px;font-size:2rem">${(prof.display_name||'?')[0].toUpperCase()}</div>`;
+  document.getElementById('hero-name').textContent  = prof.display_name || '—';
+  document.getElementById('hero-email').textContent = prof.email        || me.email || '';
+  document.getElementById('hero-bio').textContent   = prof.bio          || '';
+}
+
+async function loadSettings() {
+  const { data: s } = await supabase.from('user_settings').select('*').eq('user_id', me.id).single();
+  if (!s) return;
+  document.getElementById('tog-away').checked = !!s.away_mode;
+  document.getElementById('auto-text').value  = s.auto_reply_text || '';
+}
+
+async function saveProfile() {
+  const name  = document.getElementById('edit-name').value.trim();
+  const phone = document.getElementById('edit-phone').value.trim();
+  const bio   = document.getElementById('edit-bio').value.trim();
+  if (!name) { Toast.error('Name cannot be empty'); return; }
+  const { error } = await supabase.from('profiles').update({ display_name: name, phone_number: phone || null, bio }).eq('id', me.id);
+  if (error) { Toast.error('Save failed'); return; }
+  prof.display_name = name; prof.bio = bio; prof.phone_number = phone;
+  renderHero();
+  Toast.success('Profile updated!');
+}
+
+async function setOnline(on) {
+  await supabase.from('profiles').update({ status: on ? 'online' : 'offline' }).eq('id', me.id);
+}
+
+async function setAway(away) {
+  await supabase.from('user_settings').upsert({ user_id: me.id, away_mode: away }, { onConflict: 'user_id' });
+  Toast.success(`Away mode ${away ? 'enabled' : 'disabled'}`);
+}
+
+async function saveAutoReply() {
+  const txt = document.getElementById('auto-text').value.trim();
+  if (!txt) { Toast.error('Reply text cannot be empty'); return; }
+  await supabase.from('user_settings').upsert({ user_id: me.id, auto_reply_text: txt }, { onConflict: 'user_id' });
+  Toast.success('Auto-reply saved!');
+}
+
+/* ── Photo upload with circle crop ── */
+async function pickPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { Toast.error('Max 5 MB'); return; }
+  showCropOverlay(URL.createObjectURL(file), async (blob) => {
+    const fname = `avatars/${me.id}.jpg`;
+    const { error } = await supabase.storage.from('media').upload(fname, blob, { contentType: 'image/jpeg', upsert: true });
+    if (error) { Toast.error('Upload failed'); return; }
+    const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fname);
+    await supabase.from('profiles').update({ profile_photo_url: publicUrl }).eq('id', me.id);
+    prof.profile_photo_url = publicUrl + '?t=' + Date.now();
+    renderHero();
+    Toast.success('Photo updated!');
+  });
+}
+
+function showCropOverlay(src, onConfirm) {
+  const SIZE = 240;
+  const ov   = document.createElement('div');
+  ov.className = 'crop-overlay';
+  ov.innerHTML = `
+    <p style="color:#fff;font-family:var(--font-display);font-weight:700">Crop Photo</p>
+    <canvas id="crop-cv" width="${SIZE}" height="${SIZE}" style="border-radius:50%;border:3px solid var(--accent)"></canvas>
+    <p style="color:var(--text2);font-size:.8rem">Cropped to a circle</p>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-ghost" onclick="this.closest('.crop-overlay').remove()">Cancel</button>
+      <button class="btn btn-primary" id="crop-ok">Use Photo</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const canvas = document.getElementById('crop-cv');
+  const ctx    = canvas.getContext('2d');
+  const img    = new Image();
+  img.onload = () => {
+    const min = Math.min(img.width, img.height);
+    ctx.beginPath(); ctx.arc(SIZE/2, SIZE/2, SIZE/2, 0, Math.PI*2); ctx.clip();
+    ctx.drawImage(img, (img.width-min)/2, (img.height-min)/2, min, min, 0, 0, SIZE, SIZE);
+  };
+  img.src = src;
+  document.getElementById('crop-ok').addEventListener('click', () => {
+    canvas.toBlob(blob => { ov.remove(); onConfirm(blob); }, 'image/jpeg', 0.9);
+  });
+}
+
+/* ── Change PIN ── */
+async function resetPIN() {
+  const email = prof.email || me.email;
+  if (!email) { Toast.error('No email on file'); return; }
+  const { error } = await supabase.auth.signInWithOtp({ email });
+  if (error) { Toast.error(error.message); return; }
+  Toast.info('Verification code sent — sign in again to set a new PIN.');
+  setTimeout(() => Auth.logout(), 1800);
+}
+
+/* ── Logout ── */
+function confirmLogout() {
+  openModal(`<div class="modal">
+    <div class="modal-header"><span style="font-family:var(--font-display);font-weight:700">Sign Out</span><button onclick="this.closest('.modal-overlay').remove()" class="btn-icon btn-ghost">✕</button></div>
+    <div class="modal-body"><p class="text-muted">Are you sure you want to sign out?</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="btn btn-danger" onclick="Auth.logout()">Sign Out</button>
+    </div>
+  </div>`);
+}
+
+/* ── Delete account ── */
+function confirmDelete() {
+  openModal(`<div class="modal">
+    <div class="modal-header"><span style="font-family:var(--font-display);font-weight:700;color:var(--red)">Delete Account</span><button onclick="this.closest('.modal-overlay').remove()" class="btn-icon btn-ghost">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <p class="text-muted">This is <strong>permanent</strong>. All your messages, posts, and data will be deleted and cannot be recovered.</p>
+      <div class="input-group">
+        <label>Type <strong>DELETE</strong> to confirm</label>
+        <input type="text" class="input" id="del-confirm" placeholder="DELETE">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="btn btn-danger" onclick="doDelete()">Delete My Account</button>
+    </div>
+  </div>`);
+}
+
+async function doDelete() {
+  const val = document.getElementById('del-confirm')?.value.trim();
+  if (val !== 'DELETE') { Toast.error('Type DELETE to confirm'); return; }
+  // Call the RPC function defined in schema.sql
+  const { error } = await supabase.rpc('delete_own_account');
+  if (error) { Toast.error('Deletion failed: ' + error.message); return; }
+  await supabase.auth.signOut();
+  location.href = 'auth.html';
+}
+
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

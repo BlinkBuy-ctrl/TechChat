@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techychat – Posts</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <meta name="theme-color" content="#6c63ff">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <style>
+    .fab{position:fixed;bottom:calc(var(--bottom-h)+16px);right:20px;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(108,99,255,.4);z-index:50;border:none;cursor:pointer;transition:.2s}
+    .fab:hover{transform:scale(1.08)}
+  </style>
+</head>
+<body>
+<nav class="top-nav">
+  <span class="logo">Techychat</span>
+  <div class="nav-icons">
+    <button class="nav-icon-btn" onclick="location.href='notifications.html'" style="position:relative">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="badge badge-notif hidden" style="position:absolute;top:6px;right:6px"></span>
+    </button>
+    <button class="nav-icon-btn" onclick="Theme.toggle()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="container">
+    <div class="section-header"><h1 class="section-title">Feed</h1></div>
+    <div id="skeleton">
+      ${[1,2].map(()=>`<div class="post-card" style="margin-bottom:12px"><div class="post-header"><div class="skeleton rounded-full" style="width:40px;height:40px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:7px"><div class="skeleton" style="height:12px;width:45%"></div><div class="skeleton" style="height:10px;width:28%"></div></div></div><div class="skeleton" style="height:180px;border-radius:0"></div></div>`).join('')}
+    </div>
+    <div id="feed"></div>
+    <div id="empty" class="empty-state hidden">
+      <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></div>
+      <p style="font-weight:600;margin-bottom:6px">Nothing here yet</p>
+      <p class="text-muted text-sm">Posts from your friends will appear here</p>
+    </div>
+  </div>
+</main>
+
+<button class="fab" onclick="newPost()" title="New Post">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<nav class="bottom-nav">
+  <a href="messages.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge badge-msg hidden" style="position:absolute;top:4px;right:8px"></span>Chats</a>
+  <a href="posts.html" class="active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Posts</a>
+  <a href="friends.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Friends</a>
+  <a href="notifications.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="badge badge-notif hidden" style="position:absolute;top:4px;right:8px"></span>Alerts</a>
+  <a href="profile.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Me</a>
+</nav>
+
+<div id="tc-toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+let me = null, newImgBlob = null, openComments = new Set();
+
+async function init() {
+  const s = await Auth.requireAuth('auth.html');
+  if (!s) return;
+  me = s.user; Idle.init();
+  await loadFeed();
+  updateBadges();
+}
+
+async function loadFeed() {
+  const { data: fr } = await supabase.from('friends').select('friend_id').eq('user_id', me.id);
+  const ids = [me.id, ...(fr||[]).map(f=>f.friend_id)];
+  const { data: posts } = await supabase.from('posts').select('*,profiles(id,display_name,profile_photo_url)').in('user_id', ids).order('created_at',{ascending:false}).limit(60);
+  document.getElementById('skeleton')?.remove();
+  if (!posts?.length) { document.getElementById('empty').classList.remove('hidden'); return; }
+  const pids = posts.map(p=>p.id);
+  const { data: myLikes } = await supabase.from('post_likes').select('post_id').eq('user_id', me.id).in('post_id', pids);
+  const { data: cc } = await supabase.from('post_comments').select('post_id').in('post_id', pids);
+  const liked = new Set((myLikes||[]).map(l=>l.post_id));
+  const cmap  = {}; (cc||[]).forEach(c=>{cmap[c.post_id]=(cmap[c.post_id]||0)+1;});
+  document.getElementById('feed').innerHTML = posts.map(p=>card(p, liked.has(p.id), cmap[p.id]||0)).join('');
+}
+
+function card(p, liked, cc) {
+  const pr = p.profiles||{};
+  return `<div class="post-card" id="post-${p.id}">
+    <div class="post-header">
+      ${avatar(pr,40)}
+      <div style="flex:1"><div style="font-weight:600;font-size:.92rem">${esc(pr.display_name||'?')}</div><div style="font-size:.72rem;color:var(--text3)">${timeAgo(p.created_at)}</div></div>
+      ${p.user_id===me.id?`<button onclick="delPost('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}
+    </div>
+    ${p.content?`<div class="post-body">${esc(p.content)}</div>`:''}
+    ${p.image_url?`<img src="${p.image_url}" class="post-image" onclick="openLightbox('${p.image_url}')" alt="">`:''}
+    <div class="post-actions">
+      <button class="post-action-btn ${liked?'liked':''}" id="lbtn-${p.id}" onclick="toggleLike('${p.id}',${liked})">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="${liked?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span id="lc-${p.id}">${p.likes_count||0}</span>
+      </button>
+      <button class="post-action-btn" onclick="toggleComments('${p.id}')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span id="ccount-${p.id}">${cc}</span>
+      </button>
+    </div>
+    <div class="comment-area hidden" id="ca-${p.id}">
+      <div id="cl-${p.id}"></div>
+      <div class="comment-input-row">
+        <input type="text" class="input" id="ci-${p.id}" placeholder="Comment…" onkeydown="if(event.key==='Enter')addComment('${p.id}')">
+        <button class="btn btn-primary btn-sm" onclick="addComment('${p.id}')">Post</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function toggleLike(pid, wasLiked) {
+  const btn = document.getElementById(`lbtn-${pid}`);
+  const cnt = document.getElementById(`lc-${pid}`);
+  const now = !wasLiked;
+  btn.classList.toggle('liked', now);
+  btn.querySelector('svg').setAttribute('fill', now?'currentColor':'none');
+  const cur = parseInt(cnt.textContent)||0;
+  cnt.textContent = now ? cur+1 : Math.max(0,cur-1);
+  btn.setAttribute('onclick', `toggleLike('${pid}',${now})`);
+  if (now) {
+    await supabase.from('post_likes').insert({post_id:pid,user_id:me.id});
+    await supabase.from('posts').update({likes_count:cur+1}).eq('id',pid);
+    const {data:p} = await supabase.from('posts').select('user_id').eq('id',pid).single();
+    if (p?.user_id !== me.id) supabase.from('notifications').insert({user_id:p.user_id,from_user_id:me.id,type:'post_like',message:'liked your post',is_read:false,link:'posts.html'});
+  } else {
+    await supabase.from('post_likes').delete().eq('post_id',pid).eq('user_id',me.id);
+    await supabase.from('posts').update({likes_count:Math.max(0,cur-1)}).eq('id',pid);
+  }
+}
+
+async function toggleComments(pid) {
+  const el = document.getElementById(`ca-${pid}`);
+  el.classList.toggle('hidden');
+  if (!openComments.has(pid)) { openComments.add(pid); await loadComments(pid); }
+}
+
+async function loadComments(pid) {
+  const {data:comments} = await supabase.from('post_comments').select('*,profiles(display_name,profile_photo_url)').eq('post_id',pid).order('created_at',{ascending:true});
+  const el = document.getElementById(`cl-${pid}`);
+  if (!comments?.length) { el.innerHTML='<p class="text-muted text-sm" style="padding:6px 0">No comments yet</p>'; return; }
+  el.innerHTML = comments.map(c=>{
+    const pr=c.profiles||{};
+    return `<div class="comment-item">${avatar(pr,28)}<div><div style="font-size:.82rem;font-weight:600">${esc(pr.display_name||'?')}</div><div style="font-size:.85rem">${esc(c.content)}</div><div class="notif-time">${timeAgo(c.created_at)}</div></div></div>`;
+  }).join('');
+}
+
+async function addComment(pid) {
+  const inp = document.getElementById(`ci-${pid}`);
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+  await supabase.from('post_comments').insert({post_id:pid,user_id:me.id,content:txt});
+  await loadComments(pid);
+  const cnt = document.getElementById(`ccount-${pid}`);
+  cnt.textContent = parseInt(cnt.textContent||0)+1;
+  const {data:p} = await supabase.from('posts').select('user_id').eq('id',pid).single();
+  if (p?.user_id !== me.id) supabase.from('notifications').insert({user_id:p.user_id,from_user_id:me.id,type:'post_comment',message:`commented: "${txt.slice(0,50)}"`,is_read:false,link:'posts.html'});
+}
+
+async function delPost(pid) {
+  if (!confirm('Delete this post?')) return;
+  await supabase.from('posts').delete().eq('id',pid);
+  document.getElementById(`post-${pid}`)?.remove();
+  Toast.success('Deleted');
+}
+
+function newPost() {
+  openModal(`<div class="modal">
+    <div class="modal-header"><span style="font-family:var(--font-display);font-weight:700">New Post</span><button onclick="this.closest('.modal-overlay').remove();newImgBlob=null" class="btn-icon btn-ghost">✕</button></div>
+    <div class="modal-body">
+      <textarea class="input" id="pt" rows="4" maxlength="1000" placeholder="What's on your mind? (friends only)" style="resize:none;width:100%"></textarea>
+      <div style="margin-top:12px">
+        <label for="pi" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem;color:var(--accent)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Add Photo
+        </label>
+        <input type="file" id="pi" accept="image/*" class="hidden" onchange="handlePostImg(event)">
+      </div>
+      <div id="pp"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove();newImgBlob=null">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPost()">Post</button>
+    </div>
+  </div>`);
+}
+
+async function handlePostImg(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size>5*1024*1024){Toast.error('Max 5MB');return;}
+  newImgBlob = await compressImage(file);
+  document.getElementById('pp').innerHTML = `<img src="${URL.createObjectURL(newImgBlob)}" style="max-height:160px;border-radius:8px;margin-top:10px;width:100%;object-fit:cover">`;
+}
+
+async function submitPost() {
+  const txt = document.getElementById('pt')?.value.trim();
+  if (!txt && !newImgBlob) { Toast.error('Add text or image'); return; }
+  let imageUrl = null;
+  if (newImgBlob) {
+    const fname = `posts/${me.id}/${Date.now()}.jpg`;
+    await supabase.storage.from('media').upload(fname, newImgBlob, {contentType:'image/jpeg'});
+    const {data:{publicUrl}} = supabase.storage.from('media').getPublicUrl(fname);
+    imageUrl = publicUrl;
+  }
+  const {data:post,error} = await supabase.from('posts').insert({user_id:me.id,content:txt||null,image_url:imageUrl,likes_count:0}).select('*,profiles(id,display_name,profile_photo_url)').single();
+  if (error){Toast.error('Failed to post');return;}
+  document.querySelector('.modal-overlay')?.remove();
+  newImgBlob = null;
+  Toast.success('Posted!');
+  document.getElementById('empty').classList.add('hidden');
+  document.getElementById('feed').insertAdjacentHTML('afterbegin', card(post,false,0));
+  // Notify friends
+  const {data:fr} = await supabase.from('friends').select('friend_id').eq('user_id',me.id);
+  if (fr) fr.forEach(f=>supabase.from('notifications').insert({user_id:f.friend_id,from_user_id:me.id,type:'new_post',message:txt?txt.slice(0,80):'📷 Posted a photo',is_read:false,link:'posts.html'}));
+}
+
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

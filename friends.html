@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Techychat – Friends</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <meta name="theme-color" content="#6c63ff">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+</head>
+<body>
+<nav class="top-nav">
+  <span class="logo">Techychat</span>
+  <div class="nav-icons">
+    <button class="nav-icon-btn" onclick="location.href='notifications.html'" style="position:relative">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="badge badge-notif hidden" style="position:absolute;top:6px;right:6px"></span>
+    </button>
+    <button class="nav-icon-btn" onclick="Theme.toggle()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="container">
+    <div class="tabs mb-4">
+      <button class="tab-btn active" id="t-friends"  onclick="tab('friends')">Friends</button>
+      <button class="tab-btn"        id="t-requests" onclick="tab('requests')">Requests <span id="req-badge" class="badge hidden" style="margin-left:4px"></span></button>
+      <button class="tab-btn"        id="t-add"      onclick="tab('add')">Add</button>
+    </div>
+
+    <!-- FRIENDS -->
+    <div id="p-friends">
+      <div class="search-input-wrapper mb-3">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="input" placeholder="Search friends…" oninput="filterFriends(this.value)">
+      </div>
+      <div id="friends-list"></div>
+      <div id="empty-friends" class="empty-state hidden">
+        <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <p style="font-weight:600;margin-bottom:6px">No friends yet</p>
+        <p class="text-muted text-sm">Search by email or name to add people</p>
+        <button class="btn btn-primary mt-4" onclick="tab('add')">Add Friend</button>
+      </div>
+    </div>
+
+    <!-- REQUESTS -->
+    <div id="p-requests" class="hidden">
+      <div id="req-list"></div>
+      <div id="empty-req" class="empty-state hidden">
+        <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
+        <p style="font-weight:600;margin-bottom:6px">No pending requests</p>
+      </div>
+    </div>
+
+    <!-- ADD -->
+    <div id="p-add" class="hidden">
+      <div class="input-group mb-4">
+        <label>Search by email or name</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="input" id="search-q" placeholder="email or display name">
+          <button class="btn btn-primary" onclick="searchUsers()">Search</button>
+        </div>
+      </div>
+      <div id="search-results"></div>
+    </div>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a href="messages.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="badge badge-msg hidden" style="position:absolute;top:4px;right:8px"></span>Chats</a>
+  <a href="posts.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Posts</a>
+  <a href="friends.html" class="active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Friends</a>
+  <a href="notifications.html" style="position:relative"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="badge badge-notif hidden" style="position:absolute;top:4px;right:8px"></span>Alerts</a>
+  <a href="profile.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Me</a>
+</nav>
+
+<div id="tc-toasts" class="toast-container"></div>
+<script src="js/app.js"></script>
+<script>
+let me = null, allFriends = [];
+
+function tab(name) {
+  ['friends','requests','add'].forEach(n => {
+    document.getElementById(`t-${n}`).classList.toggle('active', n===name);
+    document.getElementById(`p-${n}`).classList.toggle('hidden', n!==name);
+  });
+}
+
+async function init() {
+  const s = await Auth.requireAuth('auth.html');
+  if (!s) return;
+  me = s.user; Idle.init();
+  await Promise.all([loadFriends(), loadRequests()]);
+  updateBadges();
+}
+
+async function loadFriends() {
+  const { data: rows } = await supabase.from('friends').select('friend_id').eq('user_id', me.id);
+  if (!rows?.length) { document.getElementById('empty-friends').classList.remove('hidden'); return; }
+  const ids = rows.map(r=>r.friend_id);
+  const { data: profiles } = await supabase.from('profiles').select('id,display_name,profile_photo_url,status').in('id', ids);
+  allFriends = profiles || [];
+  renderFriends(allFriends);
+}
+
+function renderFriends(list) {
+  const el    = document.getElementById('friends-list');
+  const empty = document.getElementById('empty-friends');
+  if (!list.length) { empty.classList.remove('hidden'); el.innerHTML=''; return; }
+  empty.classList.add('hidden');
+  el.innerHTML = list.map(p => {
+    const on = p.status==='online';
+    return `<div class="friend-item">
+      <div style="position:relative">${avatar(p,44)}<span class="dot ${on?'dot-green':'dot-gray'}" style="position:absolute;bottom:0;right:0"></span></div>
+      <div style="flex:1;min-width:0"><div style="font-weight:600">${esc(p.display_name)}</div><div style="font-size:.78rem;color:${on?'var(--green)':'var(--text3)'}">${on?'Online':'Offline'}</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-primary" onclick="location.href='chat.html?uid=${p.id}'">Message</button>
+        <button class="btn btn-sm btn-ghost"   onclick="unfriend('${p.id}','${esc(p.display_name)}')">Unfriend</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterFriends(q) {
+  renderFriends(q ? allFriends.filter(p=>p.display_name?.toLowerCase().includes(q.toLowerCase())) : allFriends);
+}
+
+async function loadRequests() {
+  const { data: reqs } = await supabase.from('friend_requests')
+    .select('*,profiles!sender_id(id,display_name,profile_photo_url)')
+    .eq('receiver_id', me.id).eq('status','pending');
+  const n = reqs?.length||0;
+  const badge = document.getElementById('req-badge');
+  badge.textContent = n; badge.classList.toggle('hidden', !n);
+  const el    = document.getElementById('req-list');
+  const empty = document.getElementById('empty-req');
+  if (!n) { empty.classList.remove('hidden'); el.innerHTML=''; return; }
+  empty.classList.add('hidden');
+  el.innerHTML = reqs.map(r=>{
+    const p=r.profiles||{};
+    return `<div class="friend-item" id="req-${r.id}">
+      ${avatar(p,44)}
+      <div style="flex:1;min-width:0"><div style="font-weight:600">${esc(p.display_name||'?')}</div><div style="font-size:.78rem;color:var(--text3)">Sent a friend request</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-primary" onclick="respond('${r.id}','${r.sender_id}','accept')">Accept</button>
+        <button class="btn btn-sm btn-ghost"   onclick="respond('${r.id}','${r.sender_id}','decline')">Decline</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function respond(rid, senderId, action) {
+  if (action==='accept') {
+    await supabase.from('friend_requests').update({status:'accepted'}).eq('id',rid);
+    await supabase.from('friends').insert([{user_id:me.id,friend_id:senderId},{user_id:senderId,friend_id:me.id}]);
+    supabase.from('notifications').insert({user_id:senderId,from_user_id:me.id,type:'friend_accept',message:'accepted your friend request',is_read:false,link:'friends.html'});
+    Toast.success('Friend added!');
+    await loadFriends();
+  } else {
+    await supabase.from('friend_requests').update({status:'declined'}).eq('id',rid);
+    Toast.info('Request declined');
+  }
+  document.getElementById(`req-${rid}`)?.remove();
+  loadRequests();
+}
+
+async function searchUsers() {
+  const q = document.getElementById('search-q').value.trim();
+  if (!q) return;
+  const el = document.getElementById('search-results');
+  el.innerHTML = '<div class="flex justify-center" style="padding:24px"><div class="spinner"></div></div>';
+
+  // Search by email or display name
+  const isEmail = q.includes('@');
+  const { data: users } = await supabase.from('profiles').select('id,display_name,profile_photo_url,email,status')
+    .neq('id', me.id)
+    [isEmail ? 'ilike' : 'ilike'](isEmail ? 'email' : 'display_name', `%${q}%`)
+    .limit(20);
+
+  if (!users?.length) { el.innerHTML='<p class="text-muted text-sm" style="text-align:center;padding:24px">No users found</p>'; return; }
+
+  const { data: myFr }  = await supabase.from('friends').select('friend_id').eq('user_id', me.id);
+  const { data: sent }  = await supabase.from('friend_requests').select('receiver_id').eq('sender_id', me.id).eq('status','pending');
+  const frSet   = new Set((myFr||[]).map(f=>f.friend_id));
+  const sentSet = new Set((sent||[]).map(r=>r.receiver_id));
+
+  el.innerHTML = users.map(u => {
+    const isFr  = frSet.has(u.id);
+    const isSnt = sentSet.has(u.id);
+    let btn = `<button class="btn btn-sm btn-primary" onclick="sendReq('${u.id}','${esc(u.display_name)}')">Add</button>`;
+    if (isFr)  btn = `<span style="font-size:.8rem;color:var(--green);font-weight:600">✓ Friends</span>`;
+    if (isSnt) btn = `<span style="font-size:.8rem;color:var(--text3)">Sent</span>`;
+    return `<div class="friend-item">
+      ${avatar(u,44)}
+      <div style="flex:1;min-width:0"><div style="font-weight:600">${esc(u.display_name||'?')}</div><div style="font-size:.78rem;color:var(--text3)">${u.email||''}</div></div>
+      ${btn}
+    </div>`;
+  }).join('');
+}
+
+async function sendReq(uid, name) {
+  const { data: blocked } = await supabase.from('blocked_users').select('id')
+    .or(`and(user_id.eq.${me.id},blocked_id.eq.${uid}),and(user_id.eq.${uid},blocked_id.eq.${me.id})`).maybeSingle();
+  if (blocked) { Toast.error('Cannot send request'); return; }
+  const { error } = await supabase.from('friend_requests').insert({sender_id:me.id,receiver_id:uid,status:'pending'});
+  if (error && error.code!=='23505') { Toast.error('Failed'); return; }
+  supabase.from('notifications').insert({user_id:uid,from_user_id:me.id,type:'friend_request',message:'sent you a friend request',is_read:false,link:'friends.html'});
+  Toast.success(`Request sent to ${name}`);
+  searchUsers();
+}
+
+async function unfriend(fid, name) {
+  if (!confirm(`Unfriend ${name}?`)) return;
+  await supabase.from('friends').delete().or(`and(user_id.eq.${me.id},friend_id.eq.${fid}),and(user_id.eq.${fid},friend_id.eq.${me.id})`);
+  await supabase.from('friend_requests').delete().or(`and(sender_id.eq.${me.id},receiver_id.eq.${fid}),and(sender_id.eq.${fid},receiver_id.eq.${me.id})`);
+  Toast.success('Unfriended');
+  allFriends = allFriends.filter(f=>f.id!==fid);
+  renderFriends(allFriends);
+}
+
+init();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
